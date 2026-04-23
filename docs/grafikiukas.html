@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grafikiukas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #eafff2;
+    --surface: #ffffff;
+    --surface2: #d0f5e2;
+    --lime: #d4f542;
+    --violet: #5b35d5;
+    --violet-light: #ede9ff;
+    --green: #2d9e5f;
+    --red: #e03535;
+    --text: #1a1a2e;
+    --muted: #777788;
+    --border: #ddddd0;
+    --grid: #fafafa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before { display: none; }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 16px; }
+
+  /* ─── HEADER ─── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0; border-bottom: 2px solid var(--text); margin-bottom: 24px;
+  }
+  .logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .logo span { color: var(--violet); }
+
+  .hud { display: flex; gap: 10px; align-items: center; }
+  .badge {
+    background: var(--lime); border: 2px solid var(--violet);
+    border-radius: 99px; padding: 6px 14px;
+    font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--violet);
+    display: flex; align-items: center; gap: 6px; font-weight: 700;
+  }
+  .badge .val { color: var(--violet); }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; }
+  .progress-track { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; border-radius: 99px; background: var(--lime); border-right: 2px solid var(--violet); transition: width .5s ease; }
+
+  /* ─── SCREEN: MENU ─── */
+  #screen-menu { text-align: center; padding: 20px 0; }
+  .title-big { font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: 12px; color: var(--text); }
+  .title-big em { font-style: normal; color: var(--violet); }
+  .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 36px; }
+
+  .levels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 32px; }
+  .level-card {
+    background: var(--surface); border: 2px solid var(--text); border-radius: 20px;
+    padding: 20px; cursor: pointer; text-align: left; transition: all .18s;
+    position: relative; overflow: hidden;
+  }
+  .level-card:hover { background: var(--lime); transform: translateY(-3px); box-shadow: 4px 4px 0 var(--violet); }
+  .level-card.locked { opacity: .45; cursor: not-allowed; pointer-events: none; border-color: var(--border); }
+  .level-card.completed { background: var(--lime); border-color: var(--violet); }
+  .level-num { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-bottom: 8px; letter-spacing: 1px; }
+  .level-name { font-weight: 800; font-size: 1rem; margin-bottom: 4px; color: var(--text); }
+  .level-desc { font-size: 0.78rem; color: var(--muted); }
+  .level-stars { position: absolute; top: 14px; right: 14px; font-size: 0.85rem; }
+  .level-tag {
+    display: inline-block; margin-top: 10px; font-size: 0.68rem; font-family: 'Space Mono', monospace;
+    padding: 3px 10px; border-radius: 99px; background: var(--violet-light); color: var(--violet); border: 1px solid var(--violet); font-weight: 700;
+  }
+  .level-card.completed .level-tag { background: var(--violet); color: #fff; }
+
+  /* ─── SCREEN: GAME ─── */
+  #screen-game { display: none; }
+  .game-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .level-title { font-size: 1.2rem; font-weight: 800; }
+  .btn-back {
+    background: var(--lime); border: 2px solid var(--violet); color: var(--violet);
+    padding: 8px 16px; border-radius: 99px; cursor: pointer; font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem; font-weight: 700; transition: all .18s;
+  }
+  .btn-back:hover { background: var(--violet); color: #fff; }
+
+  .task-card { background: var(--surface); border: 2px solid var(--text); border-radius: 20px; padding: 20px; margin-bottom: 14px; }
+  .task-label { font-size: 0.7rem; color: var(--violet); font-family: 'Space Mono', monospace; margin-bottom: 8px; letter-spacing: 1px; font-weight: 700; }
+  .task-text { font-size: 1.05rem; font-weight: 700; line-height: 1.4; }
+  .task-formula { font-family: 'Space Mono', monospace; font-size: 0.95rem; color: var(--violet); margin-top: 8px; font-weight: 700; }
+
+  /* ─── CANVAS ─── */
+  .canvas-wrap { position: relative; background: var(--grid); border: 2px solid var(--text); border-radius: 20px; overflow: hidden; margin-bottom: 14px; }
+  canvas { display: block; width: 100%; touch-action: none; }
+
+  .canvas-legend { display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--border); font-size: 0.78rem; }
+  .legend-item { display: flex; align-items: center; gap: 6px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.72rem; }
+  .dot { width: 10px; height: 10px; border-radius: 99px; }
+
+  /* ─── OPTIONS ─── */
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .opt-btn {
+    background: var(--surface); border: 2px solid var(--text); border-radius: 16px;
+    padding: 14px; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.82rem;
+    color: var(--text); text-align: center; transition: all .18s; line-height: 1.3; font-weight: 700;
+  }
+  .opt-btn:hover { background: var(--lime); border-color: var(--violet); color: var(--violet); transform: translateY(-1px); }
+  .opt-btn.correct { border-color: var(--green); background: #d4fce8; color: var(--green); }
+  .opt-btn.wrong { border-color: var(--red); background: #ffe4e4; color: var(--red); }
+  .opt-btn:disabled { cursor: not-allowed; transform: none; }
+
+  /* ─── FEEDBACK ─── */
+  .feedback { border-radius: 16px; padding: 14px 18px; margin-bottom: 14px; display: none; font-size: 0.9rem; border: 2px solid; }
+  .feedback.show { display: block; }
+  .feedback.ok { background: #d4fce8; border-color: var(--green); color: #1a6640; }
+  .feedback.fail { background: #ffe4e4; border-color: var(--red); color: #a01010; }
+  .feedback strong { font-weight: 800; }
+
+  .btn-next {
+    width: 100%; padding: 15px; background: var(--lime); color: var(--violet);
+    border: 2px solid var(--violet); border-radius: 99px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 1rem; cursor: pointer; transition: all .18s; display: none;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .btn-next:hover { background: var(--violet); color: #fff; }
+  .btn-next.show { display: block; }
+
+  /* ─── SCREEN: RESULTS ─── */
+  #screen-result { display: none; text-align: center; padding: 30px 0; }
+  .result-title { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+  .result-stars { font-size: 2.5rem; margin: 16px 0; }
+  .result-score { font-family: 'Space Mono', monospace; font-size: 1.1rem; color: var(--violet); margin-bottom: 24px; font-weight: 700; }
+  .result-explanation { background: var(--surface); border: 2px solid var(--text); border-radius: 20px; padding: 18px; margin-bottom: 24px; text-align: left; font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+  .result-explanation h3 { color: var(--text); font-size: 1rem; margin-bottom: 10px; font-weight: 800; }
+  .result-btns { display: flex; gap: 12px; justify-content: center; }
+  .btn-primary {
+    padding: 13px 28px; background: var(--lime); color: var(--violet);
+    border: 2px solid var(--violet); border-radius: 99px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all .18s; text-transform: uppercase;
+  }
+  .btn-primary:hover { background: var(--violet); color: #fff; }
+  .btn-secondary {
+    padding: 13px 28px; background: var(--surface); border: 2px solid var(--text);
+    color: var(--text); border-radius: 99px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all .18s; text-transform: uppercase;
+  }
+  .btn-secondary:hover { border-color: var(--violet); color: var(--violet); }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--lime); border: 2px solid var(--violet); color: var(--violet);
+    border-radius: 99px; padding: 10px 20px; font-size: 0.85rem; font-weight: 800;
+    transform: translateX(200%); transition: transform .3s; z-index: 999;
+  }
+  .toast.show { transform: translateX(0); }
+
+
+  /* ─── THEORY CARD ─── */
+  .theory-card {
+    background: #fffbe6; border: 2px solid var(--violet); border-radius: 16px;
+    padding: 14px 18px; margin-bottom: 14px; font-size: 0.92rem; line-height: 1.5;
+    color: #3d2a00; animation: slideDown .3s ease;
+  }
+  .theory-card .theory-icon { font-size: 1.2rem; margin-right: 6px; }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ─── BUBBLE ─── */
+  .bubble-wrap {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-60%);
+    z-index: 9999; pointer-events: none; text-align: center;
+    animation: bubblePop .4s cubic-bezier(.175,.885,.32,1.275);
+    display: none;
+  }
+  .bubble-wrap.show { display: block; }
+  .bubble {
+    background: white; border: 3px solid var(--violet); border-radius: 24px;
+    padding: 18px 28px; font-size: 1.3rem; font-weight: 900; color: var(--violet);
+    box-shadow: 0 8px 32px rgba(91,53,213,.25); position: relative;
+    font-family: 'Nunito', sans-serif; max-width: 280px;
+  }
+  .bubble.ok-bubble { border-color: var(--green); color: var(--green); }
+  .bubble.fail-bubble { border-color: #e07000; color: #b34f00; }
+  .bubble::after {
+    content: ''; position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+    border: 8px solid transparent; border-top-color: var(--violet);
+  }
+  .bubble.ok-bubble::after { border-top-color: var(--green); }
+  .bubble.fail-bubble::after { border-top-color: #e07000; }
+  .bubble-emoji { font-size: 2.2rem; display: block; margin-bottom: 6px; }
+  @keyframes bubblePop { from { opacity:0; transform:translate(-50%,-60%) scale(.5); } to { opacity:1; transform:translate(-50%,-60%) scale(1); } }
+
+  /* ─── CONFETTI ─── */
+  .confetti-piece {
+    position: fixed; font-size: 1.8rem; z-index: 9998;
+    animation: confettiFall 1.4s ease-in forwards;
+    pointer-events: none; user-select: none; line-height: 1;
+  }
+  @keyframes confettiFall {
+    0%   { opacity:1; transform: translateY(0) rotate(0deg); }
+    100% { opacity:0; transform: translateY(320px) rotate(360deg); }
+  }
+
+
+  /* ─── CALENDLY BTN ─── */
+  .consult-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 2px solid var(--border);
+    padding: 12px 16px; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .consult-bar p {
+    font-size: 0.82rem; color: var(--muted); margin: 0; line-height: 1.3;
+  }
+  .consult-bar strong { color: var(--text); font-weight: 800; }
+  .btn-consult {
+    background: var(--lime); border: 2px solid var(--violet); color: var(--violet);
+    border-radius: 99px; padding: 10px 20px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 0.88rem; cursor: pointer; white-space: nowrap;
+    transition: all .18s; text-decoration: none; display: inline-block;
+  }
+  .btn-consult:hover { background: var(--violet); color: white; }
+  .app { padding-bottom: 80px; }
+
+  /* mobile */
+  @media(max-width:500px) {
+    .options-grid { grid-template-columns: 1fr; }
+    .levels-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HUD -->
+  <header>
+    <div class="logo" onclick="goMenu()" style="cursor:pointer;"><img src="data:image/png;base64,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" alt="Saldžios šaknys" style="height:48px;width:auto;"></div>
+    <div class="hud">
+      <div class="badge">⭐ <span class="val" id="total-stars">0</span></div>
+      <div class="badge">🔥 <span class="val" id="streak">0</span></div>
+    </div>
+  </header>
+
+  <!-- ══ MENU ══ -->
+  <div id="screen-menu">
+    <p class="title-big">Grafikų <em>Transformacijos</em></p>
+    <p class="subtitle">10–12 klasė · Pasirink lygį ir pradėk!</p>
+    <div class="levels-grid" id="levels-grid"></div>
+  </div>
+
+  <!-- ══ GAME ══ -->
+  <div id="screen-game">
+    <div class="game-header">
+      <div class="level-title" id="game-level-name"></div>
+      <button class="btn-back" onclick="goMenu()">← Meniu</button>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="q-label">Klausimas 1 / 5</span><span id="q-score">0 taškai</span></div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="theory-card" id="theory-card" style="display:none;"></div>
+    <div class="task-card">
+      <div class="task-label">UŽDUOTIS</div>
+      <div class="task-text" id="task-text"></div>
+      <div class="task-formula" id="task-formula"></div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="gc" height="300"></canvas>
+      <div class="canvas-legend">
+        <div class="legend-item"><div class="dot" style="background:#16a34a"></div>Originalas f(x)</div>
+        <div class="legend-item"><div class="dot" style="background:#0891b2"></div>Transformuota g(x)</div>
+      </div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="btn-next" id="btn-next" onclick="nextQuestion()">Toliau →</button>
+  </div>
+
+  <!-- ══ RESULT ══ -->
+  <div id="screen-result">
+    <div class="result-stars" id="res-stars"></div>
+    <div class="result-title" id="res-title"></div>
+    <div class="result-score" id="res-score"></div>
+    <div class="result-explanation" id="res-explanation"></div>
+    <div class="result-btns">
+      <button class="btn-secondary" onclick="goMenu()">← Meniu</button>
+      <button class="btn-primary" onclick="retryLevel()">↺ Kartoti</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="consult-bar">
+  <p><strong>Nesupranti temos?</strong><br>Užsisakyk trumpą konsultaciją!</p>
+  <a class="btn-consult" href="https://calendly.com/akvile-gataveckaite/konsultacija" target="_blank">📅 Užsisakyti konsultaciją</a>
+</div>
+
+<div class="bubble-wrap" id="bubble-wrap"><div class="bubble" id="bubble"><span class="bubble-emoji" id="bubble-emoji"></span><span id="bubble-text"></span></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════
+//  DATA
+// ════════════════════════════════
+
+const LEVELS = [
+  {
+    id: 0, name: 'Poslinkis vertikaliai', tag: 'f(x) ± k',
+    desc: 'Grafiko kėlimas ir leidimas ašies y kryptimi',
+    questions: [
+      {
+        theory: '📐 f(x) + k perkelia grafiką aukštyn (k>0). Konstantą pridedame po viso skaičiavimo.',
+        text: 'Laipsninė funkcija: kokia transformacija atlikta?',
+        formula: 'f(x) = x²  →  g(x) = ?',
+        fn: x => x*x/4, gn: x => x*x/4 + 2,
+        opts: ['g(x) = x² + 2', 'g(x) = x² − 2', 'g(x) = (x+2)²', 'g(x) = 2x²'],
+        ans: 0,
+        explain: 'Parabola pakelta 2 vienetais aukštyn: g(x) = x² + 2. Vertikalus poslinkis aukštyn = +k už skliaustelių.'
+      },
+      {
+        theory: '📐 f(x) − k stumia grafiką žemyn. Atimame konstantą iš visos funkcijos reikšmės.',
+        text: 'Šaknies funkcija: rask teisingą formulę.',
+        formula: 'f(x) = √x  →  g(x) = ?',
+        fn: x => x >= 0 ? Math.sqrt(x)*1.2 : NaN, gn: x => x >= 0 ? Math.sqrt(x)*1.2 - 2 : NaN,
+        opts: ['g(x) = √x − 2', 'g(x) = √(x−2)', 'g(x) = √x + 2', 'g(x) = −√x'],
+        ans: 0,
+        explain: 'Šaknies grafikas nuleistas 2 vienetais žemyn: g(x) = √x − 2. Atimant konstantą, grafikas juda žemyn.'
+      },
+      {
+        theory: '📐 Rodiklinė funkcija keliama aukštyn pridedant konstantą prie f(x).',
+        text: 'Rodiklinė funkcija: nustatyk poslinkį.',
+        formula: 'f(x) = 2ˣ  →  g(x) = 2ˣ + 3',
+        fn: x => Math.pow(2, x)/8, gn: x => Math.pow(2, x)/8 + 2,
+        opts: ['Pakeltas 3 vienetais aukštyn', 'Paslinkas 3 dešinėn', 'Suspaustas 3×', 'Atspindėtas X ašies'],
+        ans: 0,
+        explain: 'g(x) = 2ˣ + 3: rodiklinės funkcijos grafikas pakeltas 3 vienetais aukštyn. Horizontali asimptota iš y=0 tapo y=3.'
+      },
+      {
+        theory: '📐 Logaritminė funkcija: pridedant konstantą, grafikas kyla aukštyn.',
+        text: 'Logaritminė funkcija: kiek vienetų paslinko?',
+        formula: 'f(x) = ln(x)  →  g(x) = ln(x) + 2',
+        fn: x => x > 0 ? Math.log(x) : NaN, gn: x => x > 0 ? Math.log(x) + 2 : NaN,
+        opts: ['2 vienetais aukštyn', '2 vienetais žemyn', '2 vienetais dešinėn', '2 vienetais kairėn'],
+        ans: 0,
+        explain: 'g(x) = ln(x) + 2: logaritmo grafikas pakeltas 2 vienetais aukštyn. x reikšmių sritis nepakito.'
+      },
+      {
+        theory: '📐 Trigonometrinė funkcija: +k perkelia grafiką vertikaliai.',
+        text: 'Trigonometrinė funkcija: kokia formulė atitinka mėlyną grafiką?',
+        formula: 'f(x) = sin(x)  →  g(x) = ?',
+        fn: x => Math.sin(x), gn: x => Math.sin(x) + 1.5,
+        opts: ['g(x) = sin(x) + 1,5', 'g(x) = sin(x+1,5)', 'g(x) = 1,5·sin(x)', 'g(x) = sin(x) − 1,5'],
+        ans: 0,
+        explain: 'Sinuso grafikas pakeltas 1,5 vieneto aukštyn. Amplitudė nepakito, tik padėtis pasikeitė.'
+      }
+    ]
+  },
+  {
+    id: 1, name: 'Poslinkis horizontaliai', tag: 'f(x ± h)',
+    desc: 'Grafiko slinkimas kairėn ir dešinėn ašies x kryptimi',
+    questions: [
+      {
+        theory: '📐 f(x−h): minusas skliaustuose = judėjimas DEŠINĖN per h. Priešinga nei atrodo!',
+        text: 'Laipsninė funkcija: kuria kryptimi paslinko parabola?',
+        formula: 'f(x) = x²  →  g(x) = (x−2)²',
+        fn: x => x*x/4, gn: x => (x-2)*(x-2)/4,
+        opts: ['2 vienetais dešinėn', '2 vienetais kairėn', '2 vienetais aukštyn', '2 vienetais žemyn'],
+        ans: 0,
+        explain: '(x−2)²: minusas skliausteliuose reiškia poslinkį dešinėn. Viršūnė persikėlė iš (0,0) į (2,0).'
+      },
+      {
+        theory: '📐 f(x+h): plusas skliaustuose = judėjimas KAIRĖN per h.',
+        text: 'Šaknies funkcija: kokia formulė atitinka mėlyną grafiką?',
+        formula: 'f(x) = √x  →  g(x) = ?',
+        fn: x => x >= 0 ? Math.sqrt(x)*1.5 : NaN, gn: x => (x-3) >= 0 ? Math.sqrt(x-3)*1.5 : NaN,
+        opts: ['g(x) = √(x−3)', 'g(x) = √x − 3', 'g(x) = √(x+3)', 'g(x) = 3√x'],
+        ans: 0,
+        explain: '√(x−3): šaknies grafikas paslinko 3 vienetais dešinėn. Atimti iš argumento = judėjimas dešinėn.'
+      },
+      {
+        theory: '📐 Rodiklinė funkcija: f(x−h) perstumia grafiką dešinėn.',
+        text: 'Rodiklinė funkcija: nustatyk horizontalų poslinkį.',
+        formula: 'f(x) = 2ˣ  →  g(x) = 2^(x+1)',
+        fn: x => Math.pow(2,x)/8, gn: x => Math.pow(2,x+1)/8,
+        opts: ['1 vienetu kairėn', '1 vienetu dešinėn', '2 vienetais kairėn', 'Nepaslinko'],
+        ans: 0,
+        explain: '2^(x+1) = f(x+1): plusas skliaustuose = poslinkis kairėn per 1.'
+      },
+      {
+        theory: '📐 Logaritminė funkcija: argumentas (x−h) perstumia grafiką dešinėn per h.',
+        text: 'Logaritminė funkcija: rask teisingą formulę.',
+        formula: 'f(x) = log₂(x)  →  g(x) = ?',
+        fn: x => x > 0 ? Math.log2(x)*1.2 : NaN, gn: x => x > 2 ? Math.log2(x-2)*1.2 : NaN,
+        opts: ['g(x) = log₂(x−2)', 'g(x) = log₂(x) − 2', 'g(x) = log₂(x+2)', 'g(x) = 2·log₂(x)'],
+        ans: 0,
+        explain: 'log₂(x−2): argumentas sumažintas 2, todėl grafikas paslinko 2 dešinėn. Apibrėžimo sritis: x > 2.'
+      },
+      {
+        theory: '📐 Trigonometrinė funkcija: sin(x−h) paslinks grafiką h vienetų dešinėn.',
+        text: 'Trigonometrinė funkcija: g(x) = cos(x + π/2) paslinko...',
+        formula: 'f(x) = cos(x)  →  g(x) = cos(x + π/2)',
+        fn: x => Math.cos(x), gn: x => Math.cos(x + Math.PI/2),
+        opts: ['π/2 kairėn', 'π/2 dešinėn', 'π aukštyn', 'Atspindėtas'],
+        ans: 0,
+        explain: 'cos(x+π/2): plusas skliaustuose = poslinkis kairėn per π/2. Beje, cos(x+π/2) = −sin(x)!'
+      }
+    ]
+  },
+  {
+    id: 2, name: 'Atspindžiai', tag: '−f(x) / f(−x)',
+    desc: 'Grafiko atspindžiai x ir y ašių atžvilgiu',
+    questions: [
+      {
+        theory: '📐 −f(x): atspindys X ašies atžvilgiu. Kiekvienas y keičia ženklą: (x,y)→(x,−y).',
+        text: 'Laipsninė funkcija: kokia transformacija atlikta?',
+        formula: 'f(x) = x² − 2x  →  g(x) = ?',
+        fn: x => (x*x - 2*x)/4, gn: x => -(x*x - 2*x)/4,
+        opts: ['g(x) = −f(x)', 'g(x) = f(−x)', 'g(x) = f(x)+1', 'g(x) = 2f(x)'],
+        ans: 0,
+        explain: 'Grafikas atspindėtas X ašies atžvilgiu: g(x) = −f(x). Visi y koordinatės pasikeitė ženklu.'
+      },
+      {
+        theory: '📐 f(−x): atspindys Y ašies atžvilgiu. X koordinatės keičia ženklą: (x,y)→(−x,y).',
+        text: 'Šaknies funkcija: kokia tai transformacija?',
+        formula: 'f(x) = √x  →  g(x) = √(−x)',
+        fn: x => x >= 0 ? Math.sqrt(x)*1.2 : NaN, gn: x => x <= 0 ? Math.sqrt(-x)*1.2 : NaN,
+        opts: ['Atspindys Y ašies atžvilgiu', 'Atspindys X ašies atžvilgiu', 'Poslinkis kairėn', 'Ištempimas'],
+        ans: 0,
+        explain: '√(−x) = f(−x): šaknies grafikas atspindėtas Y ašies atžvilgiu. Apibrėžimo sritis tapo x ≤ 0.'
+      },
+      {
+        theory: '📐 Rodiklinė: −f(x) apverčia per X ašį. f(−x) atspindi per Y ašį.',
+        text: 'Rodiklinė funkcija: g(x) = −2ˣ yra...',
+        formula: 'f(x) = 2ˣ  →  g(x) = −2ˣ',
+        fn: x => Math.pow(2,x)/8, gn: x => -Math.pow(2,x)/8,
+        opts: ['−f(x): atspindys X ašies', 'f(−x): atspindys Y ašies', 'Poslinkis žemyn', 'Suspaudimas'],
+        ans: 0,
+        explain: '−2ˣ = −f(x): rodiklinė funkcija atspindėta X ašies atžvilgiu. Horizontali asimptota išlieka y=0, bet grafikas žemiau.'
+      },
+      {
+        theory: '📐 Logaritminė: ln(−x) yra f(−x) — atspindys Y ašies atžvilgiu.',
+        text: 'Logaritminė funkcija: g(x) = −ln(x) yra...',
+        formula: 'f(x) = ln(x)  →  g(x) = −ln(x)',
+        fn: x => x > 0 ? Math.log(x) : NaN, gn: x => x > 0 ? -Math.log(x) : NaN,
+        opts: ['Atspindys X ašies atžvilgiu', 'Atspindys Y ašies atžvilgiu', 'Poslinkis žemyn', 'Suspaudimas'],
+        ans: 0,
+        explain: '−ln(x) = −f(x): logaritmas atspindėtas X ašies atžvilgiu. Augančios funkcijos grafikas tapo mažėjančiu.'
+      },
+      {
+        theory: '📐 Trigonometrinė: −sin(x) atspindi per X ašį. sin(−x) atspindi per Y ašį.',
+        text: 'Trigonometrinė funkcija: kuo skiriasi −sin(x) ir sin(−x)?',
+        formula: 'f(x) = sin(x)',
+        fn: x => Math.sin(x), gn: x => -Math.sin(x),
+        opts: ['Sin yra nelyginė, todėl jie vienodi', 'Sin yra lyginė, todėl jie vienodi', '−sin(x) < sin(−x) visada', 'Skiriasi ženklais'],
+        ans: 0,
+        explain: 'sin(x) yra nelyginė funkcija: sin(−x) = −sin(x). Todėl abu grafikai sutampa!'
+      }
+    ]
+  },
+  {
+    id: 3, name: 'Ištempimas ir suspaudimas', tag: 'a·f(x) / f(bx)',
+    desc: 'Vertikalus ir horizontalus grafiko mastelio keitimas',
+    questions: [
+      {
+        theory: '📐 a·f(x): a>1 = ištempimas vertikaliai. Kiekvienas y dauginamas iš a.',
+        text: 'Laipsninė funkcija: g(x) = 3x² lyginant su f(x) = x²...',
+        formula: 'f(x) = x²  →  g(x) = 3x²',
+        fn: x => x*x/5, gn: x => 3*x*x/5,
+        opts: ['Vertikaliai ištemptas 3×', 'Horizontaliai ištemptas 3×', 'Paslinkas 3 aukštyn', 'Suspaustas 3×'],
+        ans: 0,
+        explain: 'g(x) = 3·f(x): kiekvienas y padauginamas iš 3. Parabola tampa siauresnė — vertikalus ištempimas.'
+      },
+      {
+        theory: '📐 f(bx): b>1 = horizontalus suspaudimas. Šaknies atveju apibrėžimo sritis keičiasi.',
+        text: 'Šaknies funkcija: g(x) = √(2x) lyginant su f(x) = √x...',
+        formula: 'f(x) = √x  →  g(x) = √(2x)',
+        fn: x => x >= 0 ? Math.sqrt(x)*1.2 : NaN, gn: x => x >= 0 ? Math.sqrt(2*x)*1.2 : NaN,
+        opts: ['Horizontaliai suspaustas 2×', 'Horizontaliai ištemptas 2×', 'Vertikaliai ištemptas 2×', 'Paslinkas dešinėn'],
+        ans: 0,
+        explain: 'f(2x) = √(2x): b=2 > 1 — horizontalus suspaudimas 2×. Grafikas "susitraukia" link Y ašies.'
+      },
+      {
+        theory: '📐 Rodiklinė: a·2ˣ ištampa vertikaliai, 2^(bx) keičia augimo greitį.',
+        text: 'Rodiklinė funkcija: g(x) = 4·2ˣ lyginant su f(x) = 2ˣ...',
+        formula: 'f(x) = 2ˣ  →  g(x) = 4·2ˣ',
+        fn: x => Math.pow(2,x)/8, gn: x => 4*Math.pow(2,x)/8,
+        opts: ['Vertikaliai ištemptas 4×', 'Horizontaliai ištemptas 4×', 'Paslinkas 4 aukštyn', 'Suspaustas 4×'],
+        ans: 0,
+        explain: 'g(x) = 4·f(x): kiekvienas y padauginamas iš 4 — vertikalus ištempimas. Horizontali asimptota y=0 išlieka.'
+      },
+      {
+        theory: '📐 Logaritminė: a·ln(x) ištampa vertikaliai. Kinta tik y reikšmės.',
+        text: 'Logaritminė funkcija: g(x) = 2·log₂(x) lyginant su f(x) = log₂(x)...',
+        formula: 'f(x) = log₂(x)  →  g(x) = 2·log₂(x)',
+        fn: x => x > 0 ? Math.log2(x)*1.0 : NaN, gn: x => x > 0 ? 2*Math.log2(x)*1.0 : NaN,
+        opts: ['Vertikaliai ištemptas 2×', 'Horizontaliai ištemptas 2×', 'Paslinkas 2 aukštyn', 'Suspaustas 2×'],
+        ans: 0,
+        explain: 'g(x) = 2·f(x): logaritmo grafikas ištemptas vertikaliai 2×. Nulinė reikšmė (x=1) nepasikeitė.'
+      },
+      {
+        theory: '📐 Trigonometrinė: a·sin(x) keičia amplitudę, sin(bx) keičia periodą.',
+        text: 'Trigonometrinė funkcija: g(x) = sin(3x) lyginant su sin(x)...',
+        formula: 'f(x) = sin(x)  →  g(x) = sin(3x)',
+        fn: x => Math.sin(x), gn: x => Math.sin(3*x),
+        opts: ['Horizontaliai suspaustas 3×, periodas = 2π/3', 'Vertikaliai ištemptas 3×', 'Paslinkas 3 kairėn', 'Amplitudė padidėja 3×'],
+        ans: 0,
+        explain: 'sin(3x): b=3 > 1 — horizontalus suspaudimas. Periodas sutrumpėja: T = 2π/3 vietoj 2π.'
+      }
+    ]
+  },
+  {
+    id: 4, name: 'Sudėtinės transformacijos', tag: 'a·f(b(x−h))+k',
+    desc: 'Kelios transformacijos kartu — visas paketas',
+    questions: [
+      {
+        theory: '📐 a·f(x−h)+k: pirmiau ištempimas/atspindys, tada horizontalus poslinkis, galiausiai vertikalus.',
+        text: 'Laipsninė funkcija: nustatyk visas transformacijas g(x) = 2(x−1)² + 3',
+        formula: 'f(x) = x²',
+        fn: x => x*x/5, gn: x => 2*(x-1)*(x-1)/5+1.5,
+        opts: ['Dešinėn 1, aukštyn 3, ištemptas 2×', 'Kairėn 1, žemyn 3, suspaustas 2×', 'Dešinėn 3, aukštyn 1', 'Tik ištemptas 2×'],
+        ans: 0,
+        explain: 'g(x) = 2(x−1)²+3: viršūnė (1,3); koeficientas 2 — ištempimas. Trys transformacijos vienu metu!'
+      },
+      {
+        theory: '📐 Šaknies funkcijai: a·√(x−h)+k apjungia visas transformacijas.',
+        text: 'Šaknies funkcija: kokios transformacijos g(x) = −√(x+2) + 1?',
+        formula: 'f(x) = √x',
+        fn: x => x >= 0 ? Math.sqrt(x)*1.0 : NaN, gn: x => x >= -2 ? -Math.sqrt(x+2)*1.0+1 : NaN,
+        opts: ['Kairėn 2, aukštyn 1, atspindys X ašies', 'Dešinėn 2, žemyn 1, atspindys Y ašies', 'Kairėn 2, žemyn 1', 'Tik atspindys'],
+        ans: 0,
+        explain: '−√(x+2)+1: (x+2) → kairėn 2; minusas → atspindys X ašies; +1 → aukštyn 1. Trys žingsniai!'
+      },
+      {
+        theory: '📐 Rodiklinei funkcijai: a·b^(x−h)+k. Horizontali asimptota tampa y=k.',
+        text: 'Rodiklinė funkcija: kokia horizontali asimptota g(x) = 2ˣ + 3?',
+        formula: 'f(x) = 2ˣ  →  g(x) = 2ˣ + 3',
+        fn: x => Math.pow(2,x)/8, gn: x => Math.pow(2,x)/8 + 2,
+        opts: ['y = 3', 'y = 0', 'y = 2', 'y = −3'],
+        ans: 0,
+        explain: 'Rodiklinės funkcijos horizontali asimptota yra y=k. Čia +3 perkėlė asimptotą į y=3.'
+      },
+      {
+        theory: '📐 Logaritminei funkcijai: a·log(b(x−h))+k apjungia visas transformacijas.',
+        text: 'Logaritminė funkcija: g(x) = −ln(x) + 2 lyginant su ln(x)...',
+        formula: 'f(x) = ln(x)  →  g(x) = −ln(x) + 2',
+        fn: x => x > 0 ? Math.log(x) : NaN, gn: x => x > 0 ? -Math.log(x)+2 : NaN,
+        opts: ['Atspindys X ašies + poslinkis aukštyn 2', 'Atspindys Y ašies + poslinkis aukštyn 2', 'Tik poslinkis aukštyn 2', 'Ištempimas ir poslinkis'],
+        ans: 0,
+        explain: '−ln(x)+2: minusas = atspindys X ašies; +2 = poslinkis aukštyn. Mažėjanti funkcija, persikėlusi aukštyn.'
+      },
+      {
+        theory: '📐 Trigonometrinei: A·sin(B(x−C))+D. A=amplitudė, B=periodas, C=fazė, D=vertikalus poslinkis.',
+        text: 'Trigonometrinė funkcija: g(x) = 2sin(x − π/2) + 1. Amplitudė ir poslinkis?',
+        formula: 'f(x) = sin(x)',
+        fn: x => Math.sin(x), gn: x => 2*Math.sin(x - Math.PI/2) + 1,
+        opts: ['Amplitudė 2, dešinėn π/2, aukštyn 1', 'Amplitudė 2, kairėn π/2, žemyn 1', 'Amplitudė 1, dešinėn 2', 'Tik amplitudė 2'],
+        ans: 0,
+        explain: 'g(x) = 2sin(x−π/2)+1: amplitudė=2; (x−π/2) → dešinėn π/2; +1 → aukštyn 1. Trys transformacijos!'
+      }
+    ]
+  },
+  {
+    id: 5, name: 'Absoliutinė vertė', tag: '|f(x)| / f(|x|)',
+    desc: 'Grafiko dalių atspindžiai naudojant absoliutinę vertę',
+    questions: [
+      {
+        theory: '📐 |f(x)|: grafiko dalys žemiau X ašies atspindinamos aukštyn.',
+        text: 'Laipsninė funkcija: g(x) = |x² − 4| — ką matai?',
+        formula: 'f(x) = x²−4  →  g(x) = |x²−4|',
+        fn: x => (x*x - 4)/2, gn: x => Math.abs(x*x - 4)/2,
+        opts: ['Dalis žemiau X ašies atlenkiama aukštyn', 'Dalis kairėje atspindima dešinėn', 'Grafikas nuleistas žemyn', 'Grafikas padvigubėja'],
+        ans: 0,
+        explain: '|x²−4|: kai x²−4 < 0 (tarp ±2), grafikas atspindimas aukštyn. Neigiamos reikšmės tampa teigiamos.'
+      },
+      {
+        theory: '📐 f(|x|): kairė pusė pakeičiama dešinės atspindžiu. Atsiranda Y ašies simetrija.',
+        text: 'Šaknies funkcija: g(x) = √|x| — kokia simetrija?',
+        formula: 'f(x) = √x  →  g(x) = √|x|',
+        fn: x => x >= 0 ? Math.sqrt(x)*1.2 : NaN, gn: x => Math.sqrt(Math.abs(x))*1.2,
+        opts: ['Simetrija Y ašies atžvilgiu', 'Simetrija X ašies atžvilgiu', 'Nėra simetrijos', 'Simetrija pradžios taško'],
+        ans: 0,
+        explain: 'f(|x|) = √|x|: kairė pusė atspindima iš dešinės. Apibrėžimo sritis išsiplečia: x ∈ (−∞, +∞).'
+      },
+      {
+        theory: '📐 Rodiklinei |f(x)| visada teigiama, nes 2ˣ > 0. Ženklo keitimo nebus.',
+        text: 'Rodiklinė funkcija: g(x) = |2ˣ − 1| — kas keičiasi?',
+        formula: 'f(x) = 2ˣ − 1  →  g(x) = |2ˣ − 1|',
+        fn: x => Math.pow(2,x)/6 - 0.8, gn: x => Math.abs(Math.pow(2,x)/6 - 0.8),
+        opts: ['Dalis žemiau X ašies (kai x<0) atlenkiama aukštyn', 'Nieko nesikeičia', 'Grafikas atspindimas Y ašies', 'Amplitudė padvigubėja'],
+        ans: 0,
+        explain: '2ˣ − 1 < 0 kai x < 0, todėl ta dalis atspindima aukštyn. Grafikas liečia X ašį taške x=0.'
+      },
+      {
+        theory: '📐 Logaritminei: |ln(x)| atspindi neigiamą dalį (kai 0 < x < 1) aukštyn.',
+        text: 'Logaritminė funkcija: g(x) = |ln(x)| — kas keičiasi?',
+        formula: 'f(x) = ln(x)  →  g(x) = |ln(x)|',
+        fn: x => x > 0 ? Math.log(x) : NaN, gn: x => x > 0 ? Math.abs(Math.log(x)) : NaN,
+        opts: ['Dalis kur 0<x<1 atspindima aukštyn', 'Visa funkcija atspindima', 'Nieko nesikeičia', 'Apibrėžimo sritis siaurėja'],
+        ans: 0,
+        explain: 'ln(x) < 0 kai 0 < x < 1. |ln(x)| tą dalį atspindi aukštyn. Grafikas liečia X ašį taške x=1.'
+      },
+      {
+        theory: '📐 |sin(x)|: visos neigiamos "bangos" atspindimos aukštyn. Periodas sutrumpėja perpus.',
+        text: 'Trigonometrinė funkcija: kiek periodų matosi g(x)=|sin(x)| per 2π?',
+        formula: 'f(x) = sin(x)  →  g(x) = |sin(x)|',
+        fn: x => Math.sin(x), gn: x => Math.abs(Math.sin(x)),
+        opts: ['2 (periodas sutrumpėja perpus)', '1 (periodas išlieka)', '4', '0,5'],
+        ans: 0,
+        explain: '|sin(x)|: neigiamos bangos atspindinamos, todėl per 2π matosi 2 kupriai. Naujasis periodas = π.'
+      }
+    ]
+  }
+];
+
+// ════════════════════════════════
+//  STATE
+// ════════════════════════════════
+let progress = JSON.parse(localStorage.getItem('gt_progress') || '{}');
+let state = { level: null, qIdx: 0, score: 0, answered: false, streak: 0, totalStars: 0 };
+
+function saveProgress() { localStorage.setItem('gt_progress', JSON.stringify(progress)); }
+function loadGlobalStats() {
+  let s = 0, st = parseInt(localStorage.getItem('gt_streak') || '0');
+  LEVELS.forEach(l => { if (progress[l.id]) s += progress[l.id].stars; });
+  state.totalStars = s;
+  state.streak = st;
+  document.getElementById('total-stars').textContent = s;
+  document.getElementById('streak').textContent = st;
+}
+
+// ════════════════════════════════
+//  MENU
+// ════════════════════════════════
+function renderMenu() {
+  const grid = document.getElementById('levels-grid');
+  grid.innerHTML = '';
+  LEVELS.forEach((lvl, i) => {
+    const p = progress[lvl.id];
+    const locked = i > 0 && !progress[LEVELS[i-1].id];
+    const stars = p ? p.stars : 0;
+    const starStr = stars > 0 ? '⭐'.repeat(stars) : (locked ? '🔒' : '');
+    const cls = locked ? 'locked' : (p ? 'completed' : '');
+    const tagText = p ? `✓ Atlikta` : (locked ? 'Užrakinta' : lvl.tag);
+    grid.innerHTML += `
+      <div class="level-card ${cls}" onclick="startLevel(${lvl.id})">
+        <div class="level-num">LYGIS ${i+1}</div>
+        <div class="level-name">${lvl.name}</div>
+        <div class="level-desc">${lvl.desc}</div>
+        <div class="level-stars">${starStr}</div>
+        <div class="level-tag">${tagText}</div>
+      </div>`;
+  });
+}
+
+// ════════════════════════════════
+//  CANVAS DRAWING
+// ════════════════════════════════
+function drawGraphs(fn, gn) {
+  const canvas = document.getElementById('gc');
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth;
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  ctx.clearRect(0,0,W,H);
+
+  const scale = Math.min(W, H) / 10;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0,0,0,.07)';
+  ctx.lineWidth = 1;
+  for (let i = -10; i <= 10; i++) {
+    ctx.beginPath(); ctx.moveTo(cx+i*scale,0); ctx.lineTo(cx+i*scale,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,cy+i*scale); ctx.lineTo(W,cy+i*scale); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = 'rgba(0,0,0,.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.font = '11px Space Mono';
+  ctx.fillText('x', W-14, cy-8);
+  ctx.fillText('y', cx+8, 14);
+  [-4,-3,-2,-1,1,2,3,4].forEach(n => {
+    ctx.fillText(n, cx+n*scale-6, cy+16);
+    if (n !== 0) ctx.fillText(-n, cx+6, cy+n*scale+4);
+  });
+
+  function drawFn(fn, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.8; ctx.beginPath();
+    let first = true, prevPy = null;
+    for (let px = 0; px < W; px++) {
+      const x = (px - cx) / scale;
+      const y = fn(x);
+      if (isNaN(y) || !isFinite(y)) { first = true; continue; }
+      const py = cy - y * scale;
+      if (py < -20 || py > H + 20) { first = true; prevPy = null; continue; }
+      if (prevPy !== null && Math.abs(py - prevPy) > H * 0.8) { first = true; }
+      if (first) { ctx.moveTo(px, py); first = false; }
+      else ctx.lineTo(px, py);
+      prevPy = py;
+    }
+    ctx.stroke();
+  }
+
+  drawFn(fn, 'rgba(22,163,74,.85)');
+  drawFn(gn, 'rgba(8,145,178,.9)');
+}
+
+// ════════════════════════════════
+//  GAME LOGIC
+// ════════════════════════════════
+function startLevel(id) {
+  const lvl = LEVELS[id];
+  state.level = lvl;
+  state.qIdx = 0;
+  state.score = 0;
+  state.answered = false;
+  document.getElementById('game-level-name').textContent = lvl.name;
+  show('screen-game');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const lvl = state.level;
+  const q = lvl.questions[state.qIdx];
+  const total = lvl.questions.length;
+
+  document.getElementById('q-label').textContent = `Klausimas ${state.qIdx+1} / ${total}`;
+  document.getElementById('q-score').textContent = `${state.score} taškai`;
+  document.getElementById('prog-fill').style.width = `${(state.qIdx/total)*100}%`;
+
+  document.getElementById('task-text').textContent = q.text;
+  document.getElementById('task-formula').textContent = q.formula;
+
+  const tc = document.getElementById('theory-card');
+  if (q.theory) {
+    tc.innerHTML = q.theory;
+    tc.style.display = 'block';
+    tc.style.animation = 'none';
+    tc.offsetHeight;
+    tc.style.animation = '';
+  } else {
+    tc.style.display = 'none';
+  }
+
+  drawGraphs(q.fn, q.gn);
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    grid.innerHTML += `<button class="opt-btn" onclick="answer(${i})">${opt}</button>`;
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btn-next').className = 'btn-next';
+  state.answered = false;
+}
+
+const WIN_MSGS = [
+  {e:'🎉', t:'Šaunuolis!'},
+  {e:'⭐', t:'Puiku!'},
+  {e:'🥕', t:'Tobulai!'},
+  {e:'🚀', t:'Super!'},
+  {e:'🏆', t:'Genialiai!'},
+  {e:'💡', t:'Teisingai!'},
+  {e:'😎', t:'Taip!'},
+  {e:'🌟', t:'Bravo!'},
+];
+const FAIL_MSGS = [
+  {e:'💪', t:'Nepasiduok!'},
+  {e:'🤔', t:'Pagalvok dar!'},
+  {e:'📖', t:'Pažiūrėk teorijos kortelę!'},
+  {e:'🔄', t:'Kita karta bus geriau!'},
+  {e:'😊', t:'Nieko tokio, mokomės!'},
+  {e:'🌱', t:'Klysti = mokytis!'},
+];
+
+function showBubble(isOk) {
+  const msgs = isOk ? WIN_MSGS : FAIL_MSGS;
+  const m = msgs[Math.floor(Math.random() * msgs.length)];
+  const wrap = document.getElementById('bubble-wrap');
+  const bub = document.getElementById('bubble');
+  document.getElementById('bubble-emoji').textContent = m.e;
+  document.getElementById('bubble-text').textContent = m.t;
+  bub.className = 'bubble ' + (isOk ? 'ok-bubble' : 'fail-bubble');
+  wrap.style.animation = 'none';
+  wrap.offsetHeight;
+  wrap.style.animation = '';
+  wrap.classList.add('show');
+  setTimeout(() => wrap.classList.remove('show'), 1800);
+}
+
+function launchConfetti() {
+  for (let i = 0; i < 22; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.textContent = '🥕';
+    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.top = (Math.random() * 20 + 5) + 'vh';
+    el.style.animationDelay = (Math.random() * 0.5) + 's';
+    el.style.animationDuration = (1.1 + Math.random() * 0.8) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+}
+
+function answer(i) {
+  if (state.answered) return;
+  state.answered = true;
+  const q = state.level.questions[state.qIdx];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const fb = document.getElementById('feedback');
+  if (i === q.ans) {
+    btns[i].classList.add('correct');
+    state.score += 10;
+    state.streak++;
+    localStorage.setItem('gt_streak', state.streak);
+    document.getElementById('streak').textContent = state.streak;
+    fb.className = 'feedback ok show';
+    fb.innerHTML = `<strong>✓ Teisingai!</strong> ${q.explain}`;
+    showBubble(true);
+    launchConfetti();
+    if (state.streak > 1) showToast('🔥 Serija: ' + state.streak + '!');
+  } else {
+    btns[i].classList.add('wrong');
+    btns[q.ans].classList.add('correct');
+    state.streak = 0;
+    localStorage.setItem('gt_streak', 0);
+    document.getElementById('streak').textContent = 0;
+    fb.className = 'feedback fail show';
+    fb.innerHTML = `<strong>✗ Neteisingai.</strong> ${q.explain}`;
+    showBubble(false);
+  }
+  document.getElementById('q-score').textContent = `${state.score} taškai`;
+  document.getElementById('btn-next').className = 'btn-next show';
+}
+
+function nextQuestion() {
+  state.qIdx++;
+  if (state.qIdx >= state.level.questions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  const maxScore = state.level.questions.length * 10;
+  const pct = state.score / maxScore;
+  let stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : 1;
+
+  const prev = progress[state.level.id];
+  if (!prev || prev.stars < stars) {
+    progress[state.level.id] = { stars };
+    saveProgress();
+  }
+
+  // unlock next
+  const nextIdx = LEVELS.indexOf(state.level) + 1;
+
+  const starStr = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+  const titles = ['Gali geriau!', 'Neblogai!', 'Puikiai!'];
+  document.getElementById('res-stars').textContent = starStr;
+  document.getElementById('res-title').textContent = titles[stars-1];
+  document.getElementById('res-score').textContent = `${state.score} / ${maxScore} taškų`;
+
+  document.getElementById('res-explanation').innerHTML = `
+    <h3>📚 Šio lygio apžvalga</h3>
+    ${state.level.desc}. Transformacijos formulė: <code>${state.level.tag}</code><br><br>
+    ${stars === 3 ? '🏆 Puikus rezultatas! Visi grafikai atpažinti teisingai.' : stars === 2 ? '👍 Geras rezultatas! Pakartok dar kartą, kad įtvirtintum.' : '💪 Rekomenduojama pakartoti. Panagrinėk grafikus atidžiau.'}
+    ${nextIdx < LEVELS.length ? '<br><br>✨ Kitas lygis atrakintas: <strong>' + LEVELS[nextIdx].name + '</strong>' : '<br><br>🎓 Visi lygiai atlikti!'}`;
+
+  show('screen-result');
+  loadGlobalStats();
+}
+
+function retryLevel() { startLevel(state.level.id); }
+
+function goMenu() { show('screen-menu'); renderMenu(); loadGlobalStats(); }
+
+// ════════════════════════════════
+//  UTILS
+// ════════════════════════════════
+function show(id) {
+  ['screen-menu','screen-game','screen-result'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'block' : 'none';
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ════════════════════════════════
+//  INIT
+// ════════════════════════════════
+window.addEventListener('resize', () => {
+  const q = state.level && state.level.questions[state.qIdx];
+  if (q && document.getElementById('screen-game').style.display !== 'none') {
+    drawGraphs(q.fn, q.gn);
+  }
+});
+
+loadGlobalStats();
+renderMenu();
+</script>
+</body>
+</html>
