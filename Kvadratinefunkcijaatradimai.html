@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kvadratinė funkcija — atrask pats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,18..144,400;0,18..144,500;0,18..144,600;1,18..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EAF0F6;
+  --paper-deep:#DCE6F0;
+  --ink:#1B2A4A;
+  --ink-soft:#4C5D7A;
+  --grid:#C3D3E3;
+  --card:#FFFFFF;
+  --gold:#E8A33D;
+  --teal:#2AA189;
+  --coral:#E2645A;
+  --disp: 'Space Grotesk', sans-serif;
+  --body: 'Literata', serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --radius: 14px;
+}
+*{box-sizing:border-box;}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+    var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  min-height:100vh;
+  padding:0 0 80px 0;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+
+/* header */
+header.top{padding:28px 24px 10px; max-width:1080px; margin:0 auto;}
+.eyebrow{
+  font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--teal); font-weight:600;
+}
+h1.mainTitle{
+  font-family:var(--disp); font-weight:700; font-size:clamp(28px,4.4vw,44px);
+  margin:6px 0 4px; letter-spacing:-0.01em; line-height:1.05;
+}
+.sub{color:var(--ink-soft); font-size:16px; max-width:640px;}
+
+/* progress dots */
+.progress{
+  display:flex; gap:6px; flex-wrap:wrap; margin:20px 0 8px; align-items:center;
+}
+.dot{
+  width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:11px; font-weight:600; color:var(--ink-soft);
+  background:var(--card); border:1.5px solid var(--grid); cursor:pointer; transition:all .25s;
+  flex:none;
+}
+.dot.active{background:var(--ink); color:#fff; border-color:var(--ink); transform:scale(1.12);}
+.dot.done{background:var(--teal); color:#fff; border-color:var(--teal);}
+
+/* section panel */
+.stage{max-width:1080px; margin:18px auto 0; padding:0 24px;}
+.panel{
+  background:var(--card); border-radius: var(--radius); padding:32px clamp(20px,4vw,44px);
+  box-shadow: 0 1px 0 rgba(27,42,74,.04), 0 14px 34px -18px rgba(27,42,74,.28);
+  border:1px solid rgba(27,42,74,.06);
+  animation: rise .5s ease both;
+}
+@keyframes rise{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+
+.kicker{
+  font-family:var(--mono); font-size:12px; color:var(--gold); font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  margin-bottom:6px;
+}
+h2.secTitle{
+  font-family:var(--disp); font-weight:600; font-size:clamp(21px,3vw,30px); margin:0 0 14px; line-height:1.15;
+}
+.prompt{font-size:18px; line-height:1.55; color:var(--ink);}
+.prompt b{color:var(--ink);}
+.note{color:var(--ink-soft); font-size:15px; line-height:1.6;}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:start;}
+@media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+.graphBox{
+  background: var(--paper-deep); border-radius:12px; padding:14px;
+  border:1px solid var(--grid);
+}
+canvas{display:block; width:100%; height:320px; border-radius:8px;}
+.miniCanvasGrid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.miniCard{background:var(--paper-deep); border-radius:10px; padding:10px; border:1px solid var(--grid); text-align:center;}
+.miniCard canvas{height:140px;}
+.miniLabel{font-family:var(--mono); font-size:12px; color:var(--ink-soft); margin-top:4px;}
+
+table.valTable{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:15px;}
+table.valTable th, table.valTable td{
+  padding:8px 10px; text-align:center; border-bottom:1px solid var(--grid);
+}
+table.valTable th{color:var(--ink-soft); font-weight:600; font-size:12px; letter-spacing:.06em; text-transform:uppercase;}
+table.valTable tr.rowIn{animation: slideIn .35s ease both;}
+@keyframes slideIn{from{opacity:0; transform:translateX(-8px);} to{opacity:1; transform:translateX(0);}}
+
+.sliderRow{display:flex; align-items:center; gap:14px; margin:14px 0;}
+.sliderRow label{font-family:var(--mono); font-weight:600; font-size:15px; min-width:34px; color:var(--ink);}
+.sliderRow input[type=range]{flex:1; accent-color:var(--teal); height:4px;}
+.sliderVal{
+  font-family:var(--mono); font-size:14px; background:var(--paper-deep); border-radius:6px;
+  padding:3px 9px; min-width:52px; text-align:center; border:1px solid var(--grid);
+}
+
+.formula{
+  font-family:var(--mono); font-size:clamp(18px,2.6vw,24px); text-align:center; padding:14px 10px;
+  background:var(--paper-deep); border-radius:10px; margin:16px 0; letter-spacing:.02em;
+  border:1px dashed var(--grid); color:var(--ink);
+}
+.formula .hi{color:var(--coral); font-weight:600;}
+.formula .hi2{color:var(--teal); font-weight:600;}
+.formula .hi3{color:var(--gold); font-weight:600;}
+
+.reveal{
+  overflow:hidden; max-height:0; opacity:0; transition:max-height .5s ease, opacity .5s ease, margin .5s ease;
+}
+.reveal.open{max-height:900px; opacity:1; margin-top:16px;}
+.answerBox{
+  background: linear-gradient(135deg, #FFF7EA, #FFF); border:1px solid #F0DCB0; border-radius:10px; padding:16px 18px;
+}
+.answerBox b{color:var(--gold);}
+
+.stepList{list-style:none; margin:0; padding:0;}
+.stepList li{
+  display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px dashed var(--grid);
+  opacity:0; transform:translateY(6px); animation:stepIn .4s ease forwards;
+}
+.stepList li .n{
+  font-family:var(--mono); background:var(--ink); color:#fff; border-radius:50%; width:24px; height:24px;
+  display:flex; align-items:center; justify-content:center; font-size:12px; flex:none;
+}
+@keyframes stepIn{to{opacity:1; transform:translateY(0);}}
+
+.btnRow{display:flex; gap:12px; margin-top:26px; flex-wrap:wrap; align-items:center;}
+button.btn{
+  font-family:var(--disp); font-weight:600; font-size:15px; padding:11px 22px; border-radius:999px;
+  border:none; cursor:pointer; transition: transform .15s ease, box-shadow .15s ease;
+  background:var(--ink); color:#fff;
+}
+button.btn:hover{transform:translateY(-1px);}
+button.btn.ghost{background:transparent; color:var(--ink); border:1.5px solid var(--grid);}
+button.btn.gold{background:var(--gold); color:#3a2a06;}
+button.btn:disabled{opacity:.4; cursor:default; transform:none;}
+button.btn.small{padding:7px 14px; font-size:13px;}
+
+.formSwitchRow{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+
+.summaryGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:10px;}
+@media (max-width:760px){.summaryGrid{grid-template-columns:1fr 1fr;}}
+@media (max-width:480px){.summaryGrid{grid-template-columns:1fr;}}
+.sumCard{
+  background:var(--paper-deep); border:1px solid var(--grid); border-radius:12px; padding:16px;
+}
+.sumCard .sym{font-family:var(--mono); font-size:22px; font-weight:700; color:var(--teal);}
+.sumCard p{font-size:14px; color:var(--ink-soft); margin:6px 0 0; line-height:1.4;}
+
+.badge{
+  display:inline-block; font-family:var(--mono); font-size:11px; padding:2px 8px; border-radius:6px;
+  background:var(--teal); color:#fff; margin-left:8px; opacity:0; transition:opacity .3s;
+}
+.badge.show{opacity:1;}
+
+.hint{font-size:13px; color:var(--ink-soft); font-style:italic; margin-top:6px;}
+
+footer.done{
+  text-align:center; padding:50px 24px; color:var(--ink-soft); font-family:var(--mono); font-size:13px;
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="eyebrow">VBE matematika · Kvadratinė funkcija</div>
+  <h1 class="mainTitle">Atrask, kaip veikia parabolė</h1>
+  <div class="sub">Ne teorija iš karto — pirmiausia pastebi, pabandai, tada padarai išvadą. 13 atradimų.</div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main class="stage">
+  <div id="panelHost"></div>
+</main>
+
+<footer class="done" id="finalFooter" style="display:none;">— tu perėjai visą kvadratinės funkcijos kelią —</footer>
+
+<script>
+/* ============ CORE GRAPH ENGINE ============ */
+const COLORS = { ink:'#1B2A4A', teal:'#2AA189', gold:'#E8A33D', coral:'#E2645A', grid:'#C3D3E3', soft:'#4C5D7A' };
+
+class Graph{
+  constructor(canvas, xr=[-8,8], yr=[-6,14]){
+    this.canvas = canvas; this.ctx = canvas.getContext('2d');
+    this.xr = xr; this.yr = yr;
+    this.resize();
+    this._ro = new ResizeObserver(()=>{ this.resize(); if(this._redraw) this._redraw(); });
+    this._ro.observe(canvas);
+  }
+  resize(){
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    this.w = rect.width; this.h = rect.height || 320;
+    this.canvas.width = Math.max(1,this.w*dpr); this.canvas.height = Math.max(1,this.h*dpr);
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  toPx(x,y){
+    return [ (x-this.xr[0])/(this.xr[1]-this.xr[0])*this.w, this.h - (y-this.yr[0])/(this.yr[1]-this.yr[0])*this.h ];
+  }
+  clear(){ this.ctx.clearRect(0,0,this.w,this.h); }
+  drawAxes(){
+    const ctx=this.ctx;
+    ctx.strokeStyle = 'rgba(27,42,74,0.18)'; ctx.lineWidth=1;
+    for(let x=Math.ceil(this.xr[0]); x<=this.xr[1]; x++){
+      const [px] = this.toPx(x,0);
+      ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,this.h); ctx.stroke();
+    }
+    for(let y=Math.ceil(this.yr[0]); y<=this.yr[1]; y++){
+      const [,py] = this.toPx(0,y);
+      ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(this.w,py); ctx.stroke();
+    }
+    ctx.strokeStyle = COLORS.ink; ctx.lineWidth=1.6;
+    const [ox,oy] = this.toPx(0,0);
+    ctx.beginPath(); ctx.moveTo(0,oy); ctx.lineTo(this.w,oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox,0); ctx.lineTo(ox,this.h); ctx.stroke();
+    ctx.fillStyle = COLORS.soft; ctx.font = '11px IBM Plex Mono';
+    ctx.fillText('x', this.w-14, oy-6);
+    ctx.fillText('y', ox+6, 12);
+  }
+  parabola(a,b,c,color=COLORS.ink,lw=3,dash=[]){
+    const ctx=this.ctx; ctx.save();
+    ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.setLineDash(dash); ctx.lineJoin='round';
+    ctx.beginPath();
+    let started=false;
+    const steps=240;
+    for(let i=0;i<=steps;i++){
+      const x = this.xr[0] + (this.xr[1]-this.xr[0])*i/steps;
+      const y = a*x*x+b*x+c;
+      const [px,py] = this.toPx(x,y);
+      if(y < this.yr[0]-2 || y > this.yr[1]+2){ started=false; continue; }
+      if(!started){ ctx.moveTo(px,py); started=true; } else ctx.lineTo(px,py);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  point(x,y,color=COLORS.coral,r=5,label=''){
+    const [px,py]=this.toPx(x,y); const ctx=this.ctx;
+    ctx.beginPath(); ctx.fillStyle=color; ctx.arc(px,py,r,0,7); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    if(label){ ctx.fillStyle=COLORS.ink; ctx.font='600 12px IBM Plex Mono'; ctx.fillText(label, px+8, py-8); }
+  }
+  vline(x,color=COLORS.teal,dash=[5,4]){
+    const ctx=this.ctx; const [px]=this.toPx(x,0);
+    ctx.save(); ctx.strokeStyle=color; ctx.setLineDash(dash); ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,this.h); ctx.stroke(); ctx.restore();
+  }
+}
+
+/* helper: format coefficient in formula string */
+function fmt(n){ n=Math.round(n*100)/100; return (Object.is(n,-0)?0:n); }
+function signed(n, first=false){
+  n=fmt(n);
+  if(first) return (n<0? '−'+Math.abs(n) : n);
+  return (n<0 ? ' − '+Math.abs(n) : ' + '+n);
+}
+
+/* ============ SECTION DEFINITIONS ============ */
+const SECTIONS = [
+  {id:'s1', label:'1', title:'Ar atpažįsti?', build:buildS1},
+  {id:'s2', label:'2', title:'Atsakymas', build:buildS2},
+  {id:'s3', label:'3', title:'Pati paprasčiausia parabolė', build:buildS3},
+  {id:'s4', label:'4', title:'Kas atsitinka, kai pridedame a?', build:buildS4},
+  {id:'s5', label:'5', title:'Kas atsitinka, kai pridedame c?', build:buildS5},
+  {id:'s6', label:'6', title:'Kas atsitinka, kai pridedame b?', build:buildS6},
+  {id:'s7', label:'7', title:'Pilna kvadratinė funkcija', build:buildS7},
+  {id:'s8', label:'8', title:'Pereiname į viršūnės formą', build:buildS8},
+  {id:'s9', label:'9', title:'Sudėtingesnis pavyzdys', build:buildS9},
+  {id:'s10', label:'10', title:'Išvada apie viršūnės formą', build:buildS10},
+  {id:'s11', label:'11', title:'Nulių forma', build:buildS11},
+  {id:'s12', label:'12', title:'Sujunk viską', build:buildS12},
+  {id:'s13', label:'13', title:'Galutinė santrauka', build:buildS13},
+];
+
+let current = 0;
+const host = document.getElementById('panelHost');
+const progressEl = document.getElementById('progress');
+
+function renderProgress(){
+  progressEl.innerHTML='';
+  SECTIONS.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i===current?' active':'')+(i<current?' done':'');
+    d.textContent=s.label;
+    d.title=s.title;
+    d.onclick=()=>goTo(i);
+    progressEl.appendChild(d);
+  });
+}
+
+function goTo(i){
+  if(i<0||i>=SECTIONS.length) return;
+  current=i;
+  host.innerHTML='';
+  const panel=document.createElement('div');
+  panel.className='panel';
+  host.appendChild(panel);
+  SECTIONS[i].build(panel);
+  renderProgress();
+  document.getElementById('finalFooter').style.display = (i===SECTIONS.length-1)?'block':'none';
+  window.scrollTo({top: host.offsetTop-10, behavior:'smooth'});
+}
+
+function navRow(panel, {back=true, next=true, nextLabel='Toliau ▶', nextDisabled=false, onNext=null}={}){
+  const row=document.createElement('div'); row.className='btnRow';
+  if(back && current>0){
+    const b=document.createElement('button'); b.className='btn ghost'; b.textContent='◀ Atgal';
+    b.onclick=()=>goTo(current-1); row.appendChild(b);
+  }
+  if(next){
+    const n=document.createElement('button'); n.className='btn'; n.textContent=nextLabel;
+    n.disabled=nextDisabled;
+    n.onclick=()=>{ if(onNext && onNext()===false) return; goTo(current+1); };
+    row.appendChild(n);
+    row.dataset.nextBtnRef='1';
+    row._nextBtn = n;
+  }
+  panel.appendChild(row);
+  return row;
+}
+
+/* ============ SECTION 1 ============ */
+function buildS1(panel){
+  panel.innerHTML = `
+    <div class="kicker">Pastebėk</div>
+    <h2 class="secTitle">Ar atpažįsti šiuos grafikus?</h2>
+    <div class="prompt">Pažiūrėk į keturis grafikus. Nesistenk atsiminti formulių — tiesiog stebėk formą.</div>
+    <div class="miniCanvasGrid" style="margin-top:20px;">
+      <div class="miniCard"><canvas id="m1"></canvas></div>
+      <div class="miniCard"><canvas id="m2"></canvas></div>
+      <div class="miniCard"><canvas id="m3"></canvas></div>
+      <div class="miniCard"><canvas id="m4"></canvas></div>
+    </div>
+    <div class="prompt" style="margin-top:22px;"><b>Klausimas:</b> kas bendro tarp šių keturių grafikų?</div>
+    <div class="note">Pagalvok akimirką prieš spausdamas „Toliau“.</div>
+  `;
+  const defs = [
+    {a:1,b:0,c:0}, {a:-1,b:0,c:0}, {a:2,b:0,c:0}, {a:1,b:0,c:4}
+  ];
+  ['m1','m2','m3','m4'].forEach((id,i)=>{
+    const g = new Graph(document.getElementById(id), [-5,5], [-5,9]);
+    const d = defs[i];
+    g._redraw = ()=>{ g.clear(); g.drawAxes(); g.parabola(d.a,d.b,d.c, COLORS.teal, 3); };
+    g._redraw();
+  });
+  navRow(panel, {back:false});
+}
+
+/* ============ SECTION 2 ============ */
+function buildS2(panel){
+  panel.innerHTML = `
+    <div class="kicker">Atsakymas</div>
+    <h2 class="secTitle">Visi keturi — parabolės.</h2>
+    <div class="prompt">Nesvarbu, ar jos plačios, ar siauros, ar apverstos — jų forma visada ta pati: viena „taurė“ arba viena „kalva“, simetriška abiejose pusėse.</div>
+    <div class="answerBox" style="margin-top:18px;">
+      Tokios funkcijos vadinamos <b>kvadratinėmis funkcijomis</b>, nes jose kintamasis <span style="font-family:var(--mono)">x</span> pakeltas kvadratu.
+    </div>
+    <div class="prompt" style="margin-top:20px;"><b>Kodėl jos vadinamos kvadratinėmis funkcijomis?</b></div>
+    <div class="note">Atsakymą pamatysi kitame skyriuje — pabandyk pirma pats atsakyti sau.</div>
+  `;
+  navRow(panel);
+}
+
+/* ============ SECTION 3 ============ */
+function buildS3(panel){
+  panel.innerHTML = `
+    <div class="kicker">Pastebėk ryšį</div>
+    <h2 class="secTitle">y = x² — pati paprasčiausia parabolė</h2>
+    <div class="prompt">Stebėk, kaip lentelės reikšmės virsta taškais grafike.</div>
+    <div class="grid2" style="margin-top:18px;">
+      <div>
+        <table class="valTable" id="valTable">
+          <thead><tr><th>x</th><th>y = x²</th></tr></thead>
+          <tbody id="valBody"></tbody>
+        </table>
+        <div class="btnRow"><button class="btn small ghost" id="playBtn">▶ Rodyti taškus</button></div>
+      </div>
+      <div class="graphBox"><canvas id="g3"></canvas></div>
+    </div>
+    <div class="reveal" id="s3answer">
+      <div class="answerBox">Didžiausias <span style="font-family:var(--mono)">x</span> laipsnis šioje funkcijoje yra <b>2</b> — todėl funkcija vadinama <b>kvadratine</b>.</div>
+    </div>
+  `;
+  const xs=[-3,-2,-1,0,1,2,3];
+  const g = new Graph(document.getElementById('g3'), [-5,5], [-2,10]);
+  g._redraw = ()=>{ g.clear(); g.drawAxes(); };
+  g._redraw();
+  const body = document.getElementById('valBody');
+  let shown = 0;
+  document.getElementById('playBtn').onclick = ()=>{
+    body.innerHTML=''; g._redraw();
+    shown=0;
+    xs.forEach((x,i)=>{
+      setTimeout(()=>{
+        const tr=document.createElement('tr'); tr.className='rowIn';
+        tr.innerHTML = `<td>${x}</td><td>${x*x}</td>`;
+        body.appendChild(tr);
+        g.point(x, x*x, COLORS.coral, 5);
+        shown++;
+        if(shown===xs.length){
+          setTimeout(()=>{ g.parabola(1,0,0, COLORS.ink, 2.5); document.getElementById('s3answer').classList.add('open'); }, 250);
+        }
+      }, i*220);
+    });
+  };
+  navRow(panel);
+}
+
+/* ============ SECTION 4 ============ */
+function buildS4(panel){
+  panel.innerHTML = `
+    <div class="kicker">Pabandyk</div>
+    <h2 class="secTitle">y = a·x² — kas keičiasi, kai judini a?</h2>
+    <div class="prompt">Pastumk slankiklį ir stebėk grafiką. Neskubėk daryti išvadų — tiesiog stebėk.</div>
+    <div class="formula" id="formulaS4">y = <span class="hi">a</span>x²</div>
+    <div class="sliderRow">
+      <label>a</label>
+      <input type="range" id="aSlider" min="-3" max="3" step="0.1" value="1">
+      <div class="sliderVal" id="aVal">1</div>
+    </div>
+    <div class="graphBox"><canvas id="g4"></canvas></div>
+    <div class="reveal" id="s4answer">
+      <div class="answerBox">
+        <ul style="margin:0; padding-left:18px; line-height:1.8;">
+          <li>Kai <b>a &gt; 0</b> — šakos kyla aukštyn.</li>
+          <li>Kai <b>a &lt; 0</b> — šakos leidžiasi žemyn.</li>
+          <li>Kai <b>|a|</b> didėja — parabolė siaurėja (tampa „stačiau“).</li>
+          <li>Kai <b>|a|</b> mažėja — parabolė plečiasi (tampa „plokščiau“).</li>
+        </ul>
+      </div>
+    </div>
+  `;
+  const g = new Graph(document.getElementById('g4'), [-6,6], [-8,8]);
+  const slider = document.getElementById('aSlider');
+  let moved=false;
+  function draw(){
+    const a=parseFloat(slider.value);
+    document.getElementById('aVal').textContent=a.toFixed(1);
+    g.clear(); g.drawAxes(); g.parabola(a,0,0, a<0? COLORS.coral: COLORS.teal, 3);
+    document.getElementById('formulaS4').innerHTML = `y = <span class="hi">${a.toFixed(1)}</span>x²`;
+  }
+  slider.oninput = ()=>{ if(!moved){moved=true; document.getElementById('s4answer').classList.add('open');} draw(); };
+  g._redraw = draw; draw();
+  navRow(panel);
+}
+
+/* ============ SECTION 5 ============ */
+function buildS5(panel){
+  panel.innerHTML = `
+    <div class="kicker">Pabandyk</div>
+    <h2 class="secTitle">y = a·x² + c — kas keičiasi, kai judini c?</h2>
+    <div class="prompt">Dabar prie funkcijos pridedame konstantą c. Pastumk slankiklį.</div>
+    <div class="formula" id="formulaS5">y = x² <span class="hi2">+ c</span></div>
+    <div class="sliderRow">
+      <label>c</label>
+      <input type="range" id="cSlider" min="-5" max="5" step="0.5" value="0">
+      <div class="sliderVal" id="cVal">0</div>
+    </div>
+    <div class="graphBox"><canvas id="g5"></canvas></div>
+    <div class="reveal" id="s5answer">
+      <div class="answerBox">
+        <span style="font-family:var(--mono)">c</span> pastumia visą parabolę <b>aukštyn arba žemyn</b>, nekeisdama jos formos. Grafikas kerta y ašį būtent taške <b>(0; c)</b>.
+      </div>
+    </div>
+  `;
+  const g = new Graph(document.getElementById('g5'), [-6,6], [-8,10]);
+  const slider = document.getElementById('cSlider');
+  let moved=false;
+  function draw(){
+    const c=parseFloat(slider.value);
+    document.getElementById('cVal').textContent=c;
+    g.clear(); g.drawAxes(); g.parabola(1,0,c, COLORS.teal, 3); g.point(0,c,COLORS.gold,5,'(0; '+c+')');
+    document.getElementById('formulaS5').innerHTML = `y = x² <span class="hi2">${signed(c)}</span>`;
+  }
+  slider.oninput=()=>{ if(!moved){moved=true; document.getElementById('s5answer').classList.add('open');} draw(); };
+  g._redraw=draw; draw();
+  navRow(panel);
+}
+
+/* ============ SECTION 6 ============ */
+function buildS6(panel){
+  panel.innerHTML = `
+    <div class="kicker">Pabandyk</div>
+    <h2 class="secTitle">y = a·x² + b·x — kas keičiasi, kai judini b?</h2>
+    <div class="prompt">Stebėk, kaip juda viršūnė ir simetrijos ašis.</div>
+    <div class="formula" id="formulaS6">y = x² <span class="hi3">+ bx</span></div>
+    <div class="sliderRow">
+      <label>b</label>
+      <input type="range" id="bSlider" min="-6" max="6" step="0.5" value="0">
+      <div class="sliderVal" id="bVal">0</div>
+    </div>
+    <div class="graphBox"><canvas id="g6"></canvas></div>
+    <div class="reveal" id="s6answer">
+      <div class="answerBox">
+        Keičiant <span style="font-family:var(--mono)">b</span>, viršūnė juda <b>horizontaliai</b> (ir šiek tiek vertikaliai), o kartu su ja juda ir simetrijos ašis. b pats vienas nekeičia formos, bet keičia, kur parabolė „stovi“.
+      </div>
+    </div>
+  `;
+  const g = new Graph(document.getElementById('g6'), [-8,8], [-8,12]);
+  const slider = document.getElementById('bSlider');
+  let moved=false;
+  function draw(){
+    const b=parseFloat(slider.value); const a=1,c=0;
+    document.getElementById('bVal').textContent=b;
+    const vx = -b/(2*a), vy = a*vx*vx+b*vx+c;
+    g.clear(); g.drawAxes();
+    g.vline(vx, COLORS.gold, [4,4]);
+    g.parabola(a,b,c, COLORS.teal, 3);
+    g.point(vx,vy,COLORS.coral,5,'viršūnė');
+    document.getElementById('formulaS6').innerHTML = `y = x² <span class="hi3">${signed(b)}x</span>`;
+  }
+  slider.oninput=()=>{ if(!moved){moved=true; document.getElementById('s6answer').classList.add('open');} draw(); };
+  g._redraw=draw; draw();
+  navRow(panel);
+}
+
+/* ============ SECTION 7 ============ */
+function buildS7(panel){
+  panel.innerHTML = `
+    <div class="kicker">Pabandyk viską kartu</div>
+    <h2 class="secTitle">y = a·x² + b·x + c</h2>
+    <div class="prompt">Dabar turi visus tris valdiklius. Pažaisk — pamatysi, kaip a, b ir c veikia kartu.</div>
+    <div class="formula" id="formulaS7">y = x²</div>
+    <div class="sliderRow"><label>a</label><input type="range" id="s7a" min="-3" max="3" step="0.1" value="1"><div class="sliderVal" id="s7aVal">1</div></div>
+    <div class="sliderRow"><label>b</label><input type="range" id="s7b" min="-6" max="6" step="0.5" value="0"><div class="sliderVal" id="s7bVal">0</div></div>
+    <div class="sliderRow"><label>c</label><input type="range" id="s7c" min="-5" max="5" step="0.5" value="0"><div class="sliderVal" id="s7cVal">0</div></div>
+    <div class="graphBox"><canvas id="g7"></canvas></div>
+  `;
+  const g = new Graph(document.getElementById('g7'), [-8,8], [-8,12]);
+  const sa=document.getElementById('s7a'), sb=document.getElementById('s7b'), sc=document.getElementById('s7c');
+  function draw(){
+    const a=parseFloat(sa.value), b=parseFloat(sb.value), c=parseFloat(sc.value);
+    document.getElementById('s7aVal').textContent=a.toFixed(1);
+    document.getElementById('s7bVal').textContent=b;
+    document.getElementById('s7cVal').textContent=c;
+    g.clear(); g.drawAxes(); g.parabola(a,b,c, COLORS.teal, 3);
+    document.getElementById('formulaS7').innerHTML = `y = <span class="hi">${a.toFixed(1)}</span>x²<span class="hi3">${signed(b)}x</span><span class="hi2">${signed(c)}</span>`;
+  }
+  [sa,sb,sc].forEach(s=>s.oninput=draw);
+  g._redraw=draw; draw();
+  navRow(panel);
+}
+
+/* ============ SECTION 8 ============ */
+function buildS8(panel){
+  panel.innerHTML = `
+    <div class="kicker">Nauja forma</div>
+    <h2 class="secTitle">Ta pati funkcija — kitaip užrašyta</h2>
+    <div class="prompt">Bet kurią kvadratinę funkciją galima užrašyti taip: <span style="font-family:var(--mono)">y = a(x − m)² + n</span>. Pradėkime nuo labai paprasto pavyzdžio.</div>
+    <div class="formula">(x − 2)²</div>
+    <button class="btn small ghost" id="expandBtn">Išskleisti</button>
+    <div class="reveal" id="s8expand">
+      <div class="answerBox">(x − 2)² = x² − 4x + 4 <span class="note">(greitosios daugybos formulė)</span></div>
+    </div>
+    <div class="reveal" id="s8graphWrap">
+      <div class="graphBox" style="margin-top:16px;"><canvas id="g8"></canvas></div>
+      <div class="note" style="margin-top:8px;">Viršūnė yra taške <b>(2; 0)</b> — pastebi, kad skaičius 2 iš skliaustų tiesiog „persikėlė“ į viršūnės koordinatę?</div>
+    </div>
+  `;
+  const g = new Graph(document.getElementById('g8'), [-4,8], [-2,10]);
+  g._redraw = ()=>{ g.clear(); g.drawAxes(); g.parabola(1,-4,4, COLORS.teal, 3); g.point(2,0,COLORS.coral,6,'(2; 0)'); };
+  document.getElementById('expandBtn').onclick = ()=>{
+    document.getElementById('s8expand').classList.add('open');
+    setTimeout(()=>{ document.getElementById('s8graphWrap').classList.add('open'); g._redraw(); }, 300);
+  };
+  navRow(panel);
+}
+
+/* ============ SECTION 9 ============ */
+function buildS9(panel){
+  panel.innerHTML = `
+    <div class="kicker">Sudėtingesnis atvejis</div>
+    <h2 class="secTitle">x² − 4x + 7 — užbaikime kvadratu</h2>
+    <div class="prompt">Šįkart paprasta formulė neveikia iš karto. Spausk „Kitas žingsnis“ ir stebėk, kaip keičiasi grafikas.</div>
+    <ul class="stepList" id="stepList"></ul>
+    <button class="btn small gold" id="stepBtn">Kitas žingsnis ▶</button>
+    <div class="graphBox" style="margin-top:16px;"><canvas id="g9"></canvas></div>
+  `;
+  const g = new Graph(document.getElementById('g9'), [-3,7], [0,14]);
+  g._redraw = ()=>{ g.clear(); g.drawAxes(); };
+  g._redraw();
+  const steps = [
+    {text:'Pradedame nuo x² − 4x + 7', draw:()=>{ g._redraw(); g.parabola(1,-4,7, COLORS.grid, 2); }},
+    {text:'Paimame x² − 4x ir papildome iki pilno kvadrato: (x − 2)² = x² − 4x + 4', draw:()=>{}},
+    {text:'Taigi x² − 4x = (x − 2)² − 4', draw:()=>{}},
+    {text:'Grąžiname atgal: (x − 2)² − 4 + 7 = (x − 2)² + 3', draw:()=>{ g._redraw(); g.parabola(1,-4,7, COLORS.teal, 3); g.point(2,3,COLORS.coral,6,'(2; 3)'); }},
+    {text:'Kodėl atsiranda n? Nes „papildydami iki kvadrato“ mes pridėjome ir atėmėme tą pačią reikšmę — ji tiesiog persikėlė į n.', draw:()=>{}},
+  ];
+  let idx=0;
+  const list = document.getElementById('stepList');
+  const btn = document.getElementById('stepBtn');
+  function addStep(){
+    if(idx>=steps.length){ btn.disabled=true; btn.textContent='Baigta ✓'; return; }
+    const li=document.createElement('li');
+    li.style.animationDelay='0s';
+    li.innerHTML = `<div class="n">${idx+1}</div><div>${steps[idx].text}</div>`;
+    list.appendChild(li);
+    steps[idx].draw();
+    idx++;
+    if(idx>=steps.length){ btn.disabled=true; btn.textContent='Baigta ✓'; }
+  }
+  btn.onclick=addStep;
+  navRow(panel);
+}
+
+/* ============ SECTION 10 ============ */
+function buildS10(panel){
+  panel.innerHTML = `
+    <div class="kicker">Išvada</div>
+    <h2 class="secTitle">y = a(x − m)² + n → viršūnė (m; n)</h2>
+    <div class="prompt">Pajudink m ir n ir stebėk, kaip viršūnė seka paskui skaičius formulėje.</div>
+    <div class="formula" id="formulaS10">y = (x − <span class="hi">0</span>)² + <span class="hi2">0</span></div>
+    <div class="sliderRow"><label>m</label><input type="range" id="mSlider" min="-5" max="5" step="0.5" value="0"><div class="sliderVal" id="mVal">0</div></div>
+    <div class="sliderRow"><label>n</label><input type="range" id="nSlider" min="-5" max="5" step="0.5" value="0"><div class="sliderVal" id="nVal">0</div></div>
+    <div class="graphBox"><canvas id="g10"></canvas></div>
+  `;
+  const g = new Graph(document.getElementById('g10'), [-8,8], [-8,10]);
+  const ms=document.getElementById('mSlider'), ns=document.getElementById('nSlider');
+  function draw(){
+    const m=parseFloat(ms.value), n=parseFloat(ns.value);
+    document.getElementById('mVal').textContent=m; document.getElementById('nVal').textContent=n;
+    g.clear(); g.drawAxes();
+    g.parabola(1,-2*m,m*m+n, COLORS.teal,3);
+    g.point(m,n,COLORS.coral,6,`(${m}; ${n})`);
+    document.getElementById('formulaS10').innerHTML = `y = (x − <span class="hi">${m}</span>)² + <span class="hi2">${n}</span>`;
+  }
+  [ms,ns].forEach(s=>s.oninput=draw);
+  g._redraw=draw; draw();
+  navRow(panel);
+}
+
+/* ============ SECTION 11 ============ */
+function buildS11(panel){
+  panel.innerHTML = `
+    <div class="kicker">Dar viena forma</div>
+    <h2 class="secTitle">y = a(x − x₁)(x − x₂)</h2>
+    <div class="graphBox"><canvas id="g11"></canvas></div>
+    <div class="prompt" style="margin-top:14px;"><b>Klausimas:</b> kodėl čia du skliaustai?</div>
+    <button class="btn small ghost" id="revealBtn11">Sužinoti kodėl</button>
+    <div class="reveal" id="s11a">
+      <div class="answerBox">
+        Jei <span style="font-family:var(--mono)">(x − 3) = 0</span>, tai <b>x = 3</b>.<br>
+        Jei <span style="font-family:var(--mono)">(x + 2) = 0</span>, tai <b>x = −2</b>.<br><br>
+        Taigi kiekvienas skliaustas parodo po vieną tašką, kuriame grafikas kerta x ašį — parabolės <b>šaknį</b>.
+      </div>
+    </div>
+    <div class="reveal" id="s11b">
+      <div class="formula">y = a(x − x₁)(x − x₂)</div>
+      <div class="sliderRow"><label>x₁</label><input type="range" id="x1S" min="-6" max="6" step="0.5" value="-2"><div class="sliderVal" id="x1V">-2</div></div>
+      <div class="sliderRow"><label>x₂</label><input type="range" id="x2S" min="-6" max="6" step="0.5" value="3"><div class="sliderVal" id="x2V">3</div></div>
+      <div class="graphBox"><canvas id="g11b"></canvas></div>
+    </div>
+  `;
+  const gTop = new Graph(document.getElementById('g11'), [-6,6], [-6,8]);
+  gTop._redraw = ()=>{ gTop.clear(); gTop.drawAxes(); gTop.parabola(1,-1,-6, COLORS.teal, 3); gTop.point(-2,0,COLORS.coral,6); gTop.point(3,0,COLORS.coral,6); };
+  gTop._redraw();
+
+  document.getElementById('revealBtn11').onclick = ()=>{
+    document.getElementById('s11a').classList.add('open');
+    setTimeout(()=>{
+      document.getElementById('s11b').classList.add('open');
+      const g2 = new Graph(document.getElementById('g11b'), [-8,8], [-8,10]);
+      const x1s=document.getElementById('x1S'), x2s=document.getElementById('x2S');
+      function draw(){
+        const x1=parseFloat(x1s.value), x2=parseFloat(x2s.value);
+        document.getElementById('x1V').textContent=x1; document.getElementById('x2V').textContent=x2;
+        const b = -(x1+x2), c = x1*x2;
+        g2.clear(); g2.drawAxes(); g2.parabola(1,b,c, COLORS.teal, 3);
+        g2.point(x1,0,COLORS.coral,6,'x₁'); g2.point(x2,0,COLORS.gold,6,'x₂');
+      }
+      [x1s,x2s].forEach(s=>s.oninput=draw);
+      g2._redraw=draw; draw();
+    }, 250);
+  };
+  navRow(panel);
+}
+
+/* ============ SECTION 12 ============ */
+function buildS12(panel){
+  const a=1,b=-2,c=-3; // vertex (1,-4); roots -1,3
+  panel.innerHTML = `
+    <div class="kicker">Sujunk viską</div>
+    <h2 class="secTitle">Trys formos — ta pati funkcija</h2>
+    <div class="prompt">Spausk mygtukus. Formulė keisis, bet grafikas — ne. Tai <b>ta pati</b> funkcija, tik parašyta trimis skirtingais būdais.</div>
+    <div class="formSwitchRow" style="margin-top:16px;">
+      <button class="btn small" data-f="standard">Bendroji</button>
+      <button class="btn small ghost" data-f="vertex">Viršūnės</button>
+      <button class="btn small ghost" data-f="factored">Nulių</button>
+    </div>
+    <div class="formula" id="formulaS12">y = x² − 2x − 3</div>
+    <div class="graphBox"><canvas id="g12"></canvas></div>
+  `;
+  const g = new Graph(document.getElementById('g12'), [-6,6], [-8,8]);
+  g._redraw = ()=>{ g.clear(); g.drawAxes(); g.parabola(a,b,c, COLORS.teal, 3); g.point(1,-4,COLORS.gold,5,'viršūnė'); g.point(-1,0,COLORS.coral,5,'x₁'); g.point(3,0,COLORS.coral,5,'x₂'); };
+  g._redraw();
+  const forms = {
+    standard: 'y = x² − 2x − 3',
+    vertex: 'y = (x − 1)² − 4',
+    factored: 'y = (x + 1)(x − 3)'
+  };
+  panel.querySelectorAll('[data-f]').forEach(btn=>{
+    btn.onclick = ()=>{
+      panel.querySelectorAll('[data-f]').forEach(b=>b.classList.add('ghost'));
+      btn.classList.remove('ghost');
+      document.getElementById('formulaS12').textContent = forms[btn.dataset.f];
+    };
+  });
+  navRow(panel);
+}
+
+/* ============ SECTION 13 ============ */
+function buildS13(panel){
+  panel.innerHTML = `
+    <div class="kicker">Santrauka</div>
+    <h2 class="secTitle">Viskas, ką dabar žinai</h2>
+    <div class="summaryGrid">
+      <div class="sumCard"><div class="sym">a</div><p>Nustato, ar šakos kyla (a&gt;0) ar leidžiasi (a&lt;0), ir kaip parabolė siaura/plati.</p></div>
+      <div class="sumCard"><div class="sym">b</div><p>Kartu su a stumia viršūnę horizontaliai — vienas pats mažai ką pasako.</p></div>
+      <div class="sumCard"><div class="sym">c</div><p>Taškas, kuriame grafikas kerta y ašį: (0; c).</p></div>
+      <div class="sumCard"><div class="sym">m</div><p>Viršūnės x koordinatė formoje y = a(x − m)² + n.</p></div>
+      <div class="sumCard"><div class="sym">n</div><p>Viršūnės y koordinatė — mažiausia arba didžiausia funkcijos reikšmė.</p></div>
+      <div class="sumCard"><div class="sym">x₁, x₂</div><p>Taškai, kuriuose grafikas kerta x ašį — funkcijos šaknys.</p></div>
+    </div>
+    <div class="graphBox" style="margin-top:22px;"><canvas id="g13"></canvas></div>
+    <div class="note" style="margin-top:10px;">Ta pati parabolė — trys formos, trys skirtingi „langai“ į tą pačią informaciją.</div>
+  `;
+  const g = new Graph(document.getElementById('g13'), [-6,6], [-8,8]);
+  g._redraw = ()=>{
+    g.clear(); g.drawAxes();
+    g.parabola(1,-2,-3, COLORS.teal, 3);
+    g.point(1,-4,COLORS.gold,6,'(m;n)');
+    g.point(-1,0,COLORS.coral,5,'x₁');
+    g.point(3,0,COLORS.coral,5,'x₂');
+    g.point(0,-3,COLORS.ink,5,'(0;c)');
+  };
+  g._redraw();
+  navRow(panel, {next:false});
+}
+
+/* boot */
+renderProgress();
+goTo(0);
+</script>
+</body>
+</html>
